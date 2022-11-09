@@ -1,0 +1,132 @@
+<script>
+    function eraseCookie(name) {   
+        document.cookie = name+'=; Max-Age=-99999999;';  
+    }
+
+    function setCookie(name,value,days) {
+        var expires = "";
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days*24*60*60*1000));
+            expires = "; expires=" + date.toUTCString();
+        }
+        document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+    }
+
+    function getCookie(name) {
+        var nameEQ = name + "=";
+        var ca = document.cookie.split(';');
+        for(var i=0;i < ca.length;i++) {
+            var c = ca[i];
+            while (c.charAt(0)==' ') c = c.substring(1,c.length);
+            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        }
+        return false;
+    }
+  
+    var cname= "utm";
+    var vGets = window.location.href.split("?");
+    if(typeof(vGets[1])!=="undefined"){
+      var _GETS = vGets[1].split("&");
+      var toADD = {};
+      for(var i = 0;i<_GETS.length;i++){
+        var obj = _GETS[i].split("=");
+        if(/utm/.test(obj[0]) || /epik/.test(obj[0])){
+          toADD[obj[0]] = obj[1];
+        }
+      }
+      if(Object.keys(toADD).length>0){
+        setCookie(cname,JSON.stringify(toADD),1);
+      }
+    }
+    var cookiesP = getCookie(cname);
+    if(cookiesP){
+      cookiesP = JSON.parse(cookiesP);
+      console.log(cookiesP);
+    }
+</script>
+
+
+function(){
+function getCookie(cname) {
+  var name = cname + "=";
+  var decodedCookie = decodeURIComponent(document.cookie);
+  var ca = decodedCookie.split(';');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return false;
+}
+  
+  var check = getCookie("utm");
+  
+  return (check ? JSON.parse(check) : false);
+}
+
+
+
+function(){
+  var utm = {{cJS - UTM}};
+  if(utm){
+    return "?utm_source="+utm.utm_source+"&utm_medium="+utm.utm_medium+"&utm_campaign="+utm.utm_campaign;
+  }
+  return "";
+}
+
+
+function(){
+  if({{cJS - UTM}}){
+    return {{cJS - UTM}}.utm_campaign
+  }
+  return null
+}
+
+
+function(){
+  if({{cJS - UTM}}){
+    return {{cJS - UTM}}.utm_medium
+  }
+  return null
+}
+
+function(){
+  if({{cJS - UTM}}){
+    return {{cJS - UTM}}.utm_source
+  }
+  return null
+}
+
+
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3E7RCTMWM7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-3E7RCTMWM7');
+  {% if first_time_accessed %}
+  gtag('event', 'purchase', {
+  transaction_id: "{{order.order_number}}",
+  value: {{total_price | times: 0.01}},
+  currency: "{{ order.currency }}",
+  tax: {{tax_price | times: 0.01}},
+  shipping: {{shipping_price | times: 0.01}},
+  items: [
+  {% for line_item in line_items %}{
+      item_id: "{{line_item.product_id}}",
+      item_name: "{{line_item.title}}",
+      quantity: {{line_item.quantity}},
+      currency: "{{ order.currency }}",
+      price: {{line_item.original_price | times: 0.01}}
+    },{% endfor %}
+  ]
+  });
+  {% endif %}
+</script>
+
