@@ -102,31 +102,67 @@ function(){
   return null
 }
 
-
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-3E7RCTMWM7"></script>
+<!---GTAG DataLayer--->
 <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-3E7RCTMWM7');
+  var value = 0;
+  var itemlist = [];
+  {% for line_item in checkout.line_items %}
+    itemlist.push({id: {{ line_item.variant_id }}, quantity: {{ line_item.quantity }},  google_business_vertical: "retail"});
+  {% endfor %}
   {% if first_time_accessed %}
-  gtag('event', 'purchase', {
-  transaction_id: "{{order.order_number}}",
-  value: {{total_price | times: 0.01}},
-  currency: "{{ order.currency }}",
-  tax: {{tax_price | times: 0.01}},
-  shipping: {{shipping_price | times: 0.01}},
-  items: [
-  {% for line_item in line_items %}{
-      item_id: "{{line_item.product_id}}",
-      item_name: "{{line_item.title}}",
-      quantity: {{line_item.quantity}},
-      currency: "{{ order.currency }}",
-      price: {{line_item.original_price | times: 0.01}}
-    },{% endfor %}
-  ]
-  });
+    window.dataLayer.push({
+      "event": 'purchase',
+      "transaction_id": '{{ order_number }}',
+      "value": {{ checkout.subtotal_price | divided_by: 100.0 }},
+      "currency": '{{ checkout.currency }}',
+
+      "discount": {{ checkout.discounts_amount | divided_by: 100.0 }},
+      "aw_merchant_id": {{CHANGE}},
+      "aw_feed_country": '{{ billing_address.country_code }}',
+      "aw_feed_language": 'EN',
+      'items': itemlist,
+      'shipping': {{ checkout.shipping_price | divided_by: 100.0 }},
+      'tax': {{ checkout.tax_price | divided_by: 100.0 }},
+      'discount_code': '{% for discount_application in checkout.discount_applications %}{{ discount_application.title }}{% endfor %}',
+
+      'email': "{{ customer.email }}",
+      "phone_number": "{{ billing_address.phone }}",
+      "first_name": "{{ billing_address.first_name }}",
+      "last_name": "{{ billing_address.last_name }}",
+      "home_address": {
+        "street": "{{ billing_address.street }}",
+        "city":"{{ billing_address.city }}",
+        "region": "{{ billing_address.province }}",
+        "postal_code": "{{ billing_address.zip }}",
+        "country": "{{ billing_address.country }}"
+      },
+      
+      ecommerce: {
+        transaction_id: "{{ order_number }}",
+        value: {{ checkout.subtotal_price | divided_by: 100.0 }},
+        tax: {{ checkout.tax_price | divided_by: 100.0 }},
+        shipping: {{ checkout.shipping_price | divided_by: 100.0 }},
+        currency: "{{ checkout.currency }}",
+        coupon: "{% for discount_application in checkout.discount_applications %}{{ discount_application.title }}{% endfor %}",
+        items: [
+          {% for line_item in line_items %}
+            {
+              "item_id": {{ line_item.variant_id }},
+              "item_name": "{{ line_item.title }}",
+              'index': {{ forloop.index0 }},
+              'discount': {{ line_item.line_level_total_discount | divided_by: 100.0 }},
+              'item_brand': "{{ line_item.product.vendor }}",
+              'item_category': "{{ line_item.product.type }}",
+              'item_variant': "{{ line_item.variant.title }}",
+              'currency': "{{ checkout.currency }}",
+              "price": {{ line_item.line_price | divided_by: 100.0 }},
+              "quantity": {{ line_item.quantity }}
+            },
+          {% endfor %}
+        ]
+      }
+    });
   {% endif %}
 </script>
-
+<!---End of GTAG DataLayer--->
